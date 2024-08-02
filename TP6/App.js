@@ -1,56 +1,98 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Titulo from './components/Titulo/Titulo';
-import Formulario from './components/Formulario/Formulario';
 import Boton from './components/Boton/Boton';
 import Tarea from './components/Tarea/Tarea';
-import { useState } from 'react';
-import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
+import { Alert, Modal, SafeAreaView, StyleSheet, FlatList, Text, Pressable, TextInput, View } from 'react-native';
 
-export default function App () {
+export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [tareas, setTareas] = useState([]);
-  return (
-    <>
-      <Titulo></Titulo>
-      <div class="botones">
-      <Formulario tareas={tareas} setTareas={setTareas}></Formulario>
-      <Boton tareas={tareas} setTareas={setTareas}></Boton>
-      </div>
-      
-      <ul>
-        {tareas.map(c => <Tarea tarea={c} tareas={tareas} setTareas={setTareas}></Tarea>)}
-      </ul>
-    <View style={styles.centeredView}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
-        }}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Hello World!</Text>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}>
-              <Text style={styles.textStyle}>Hide Modal</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-      <Pressable
-        style={[styles.button, styles.buttonOpen]}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.textStyle}>Show Modal</Text>
-      </Pressable>
-    </View>
-    </>
+  const [newTarea, setNewTarea] = useState('');
+
+  const handleAddTarea = () => {
+    if (newTarea.trim().length === 0) {
+      Alert.alert('Error', 'Por favor ingrese una tarea');
+      return;
+    }
+    setTareas([
+      ...tareas,
+      {
+        tarea: newTarea,
+        id: Date.now(),
+        fecha: Date.now(),
+        fechaTachado: null,
+      },
+    ]);
+    setNewTarea('');
+    setModalVisible(false);
+  };
+
+  const renderItem = ({ item }) => (
+    <Tarea tarea={item} tareas={tareas} setTareas={setTareas} />
   );
-};
+
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <Titulo />
+      <View style={styles.botones}>
+        <Boton tareas={tareas} setTareas={setTareas} />
+      </View>
+
+      <FlatList
+        data={tareas}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()} // Asegúrate de que cada tarea tenga una propiedad `id` única
+      />
+
+      <View style={styles.centeredView}>
+        <Pressable
+          style={[styles.TouchableOpacity, styles.TouchableOpacityOpen]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.textStyle}>Agregar Tarea</Text>
+        </Pressable>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <TextInput
+                style={styles.input}
+                placeholder="Escribe una nueva tarea..."
+                value={newTarea}
+                onChangeText={setNewTarea}
+              />
+              <Pressable
+                style={[styles.TouchableOpacity, styles.TouchableOpacityClose]}
+                onPress={handleAddTarea}
+              >
+                <Text style={styles.textStyle}>Agregar</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.TouchableOpacity, styles.TouchableOpacityClose]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textStyle}>Cancelar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
+  botones: {
+    marginVertical: 16,
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
@@ -72,15 +114,25 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  button: {
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    width: 200,
+  },
+  TouchableOpacity: {
     borderRadius: 20,
     padding: 10,
     elevation: 2,
+    marginTop: 10,
   },
-  buttonOpen: {
+  TouchableOpacityOpen: {
     backgroundColor: '#F194FF',
   },
-  buttonClose: {
+  TouchableOpacityClose: {
     backgroundColor: '#2196F3',
   },
   textStyle: {

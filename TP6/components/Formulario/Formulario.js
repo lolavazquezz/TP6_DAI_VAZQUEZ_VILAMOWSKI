@@ -1,5 +1,5 @@
 import "./Formulario.css";
-import {Alert, Modal, TextInput, StyleSheet, Text, Pressable, Button, View} from 'react-native';
+import {Alert, Modal, TextInput, StyleSheet, SafeAreaView, Text, Pressable, TouchableOpacity, View} from 'react-native';
 const Formulario = ({tareas, setTareas}) => {
     const agregarTarea = (e) => {
         e.preventDefault();
@@ -15,12 +15,12 @@ const Formulario = ({tareas, setTareas}) => {
         
     }
     return (
-        <>
-            <form onSubmit={agregarTarea}>
-                <TextInput type="text" name="tarea" class="u-full-width"></TextInput>
-                <Button class="u-full-width button-primary">Agregar tarea</Button>
-            </form>
-        </>
+        <SafeAreaView>
+            <View onSubmit={agregarTarea}>
+                <TextInput name="tarea"></TextInput>
+                <TouchableOpacity><Text>Agregar tarea</Text></TouchableOpacity>
+            </View>
+        </SafeAreaView>
     )
 }
 export default Formulario;

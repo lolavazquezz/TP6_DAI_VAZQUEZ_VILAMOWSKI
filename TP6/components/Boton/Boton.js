@@ -1,7 +1,7 @@
 import "./Boton.css";
 import React from "react";
 import { useState } from 'react';
-import {Alert, Modal, Button, TextInput, StyleSheet, Text, Pressable, View} from 'react-native';
+import {Alert, Modal, TouchableOpacity, TextInput, SafeAreaView, StyleSheet, Text, Pressable, View} from 'react-native';
 function Boton({tareas, setTareas}){
     let [tareaRapida, setTareaRapida] = useState();
     function tareaMasRapida(){
@@ -17,10 +17,10 @@ function Boton({tareas, setTareas}){
        
     }
     return (
-        <>
-            <Button onClick={tareaMasRapida} >Calcular tarea más rápida</Button>
+        <SafeAreaView>
+            <TouchableOpacity onPress={tareaMasRapida}><Text>Calcular tarea más rápida</Text></TouchableOpacity>
             {tareaRapida ? <Text>La tarea más rápida en realizarse fue: {tareaRapida}</Text> : <></>}
-        </>
+        </SafeAreaView>
     );
 
 }
