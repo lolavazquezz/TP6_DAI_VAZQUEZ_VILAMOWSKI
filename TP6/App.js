@@ -1,147 +1,184 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Titulo from './components/Titulo/Titulo';
-import Boton from './components/Boton/Boton';
 import Tarea from './components/Tarea/Tarea';
-import { Alert, Modal, SafeAreaView, StyleSheet, FlatList, Text, Pressable, TextInput, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Alert, Modal, StyleSheet, FlatList, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Button, TextInput as PaperInput } from 'react-native-paper';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [tareas, setTareas] = useState([]);
   const [newTarea, setNewTarea] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+
+  useEffect(() => {
+    const loadTareas = async () => {
+      try {
+        const tareasGuardadas = await AsyncStorage.getItem('tareas');
+        if (tareasGuardadas) {
+          setTareas(JSON.parse(tareasGuardadas));
+        }
+      } catch (error) {
+        console.error('Error cargando tareas:', error);
+      }
+    };
+    loadTareas();
+  }, []);
+
+  useEffect(() => {
+    const saveTareas = async () => {
+      try {
+        await AsyncStorage.setItem('tareas', JSON.stringify(tareas));
+      } catch (error) {
+        console.error('Error guardando tareas:', error);
+      }
+    };
+    saveTareas();
+  }, [tareas]);
 
   const handleAddTarea = () => {
-    if (newTarea.trim().length === 0) {
-      Alert.alert('Error', 'Por favor ingrese una tarea');
+    if (newTarea.trim().length === 0 || descripcion.trim().length === 0) {
+      Alert.alert('Error', 'Por favor ingrese todos los campos');
       return;
     }
     setTareas([
       ...tareas,
       {
         tarea: newTarea,
+        descripcion: descripcion,
         id: Date.now(),
         fecha: Date.now(),
         fechaTachado: null,
       },
     ]);
     setNewTarea('');
+    setDescripcion('');
     setModalVisible(false);
   };
 
+  const handleTareaUpdate = (updatedTareas) => {
+    setTareas(updatedTareas);
+    AsyncStorage.setItem('tareas', JSON.stringify(updatedTareas)).catch(error => {
+      console.error('Error guardando tareas actualizadas:', error);
+    });
+  };
+
   const renderItem = ({ item }) => (
-    <Tarea tarea={item} tareas={tareas} setTareas={setTareas} />
+    <Tarea tarea={item} tareas={tareas} setTareas={handleTareaUpdate} />
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Titulo />
-      <View style={styles.botones}>
-        <Boton tareas={tareas} setTareas={setTareas} />
-      </View>
+    <GestureHandlerRootView style={styles.container}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea}>
+          <Titulo />
 
-      <FlatList
-        data={tareas}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()} // Asegúrate de que cada tarea tenga una propiedad `id` única
-      />
+          <FlatList
+            data={tareas}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.list}
+          />
 
-      <View style={styles.centeredView}>
-        <Pressable
-          style={[styles.TouchableOpacity, styles.TouchableOpacityOpen]}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.textStyle}>Agregar Tarea</Text>
-        </Pressable>
-
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            setModalVisible(!modalVisible);
-          }}
-        >
           <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <TextInput
-                style={styles.input}
-                placeholder="Escribe una nueva tarea..."
-                value={newTarea}
-                onChangeText={setNewTarea}
-              />
-              <Pressable
-                style={[styles.TouchableOpacity, styles.TouchableOpacityClose]}
-                onPress={handleAddTarea}
-              >
-                <Text style={styles.textStyle}>Agregar</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.TouchableOpacity, styles.TouchableOpacityClose]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.textStyle}>Cancelar</Text>
-              </Pressable>
-            </View>
+            <Button
+              mode="contained"
+              onPress={() => setModalVisible(true)}
+              style={styles.addButton}
+            >
+              Agregar Tarea
+            </Button>
+
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={modalVisible}
+              onRequestClose={() => {
+                Alert.alert('Modal has been closed.');
+                setModalVisible(!modalVisible);
+              }}
+            >
+              <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+                  <PaperInput
+                    label="Escribe una nueva tarea..."
+                    value={newTarea}
+                    onChangeText={setNewTarea}
+                    style={styles.input}
+                  />
+                  <PaperInput
+                    label="Descripción..."
+                    value={descripcion}
+                    onChangeText={setDescripcion}
+                    style={styles.input}
+                  />
+                  <Button
+                    mode="contained"
+                    onPress={handleAddTarea}
+                    style={styles.modalButton}
+                  >
+                    Agregar
+                  </Button>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setModalVisible(false)}
+                    style={styles.modalButton}
+                  >
+                    Cancelar
+                  </Button>
+                </View>
+              </View>
+            </Modal>
           </View>
-        </Modal>
-      </View>
-    </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  botones: {
-    marginVertical: 16,
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  list: {
+    padding: 15,
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
   },
   modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
+    width: '90%', // Aumentar el ancho del modal
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 25,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     elevation: 5,
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
+    width: '100%',
     marginBottom: 15,
-    paddingHorizontal: 10,
-    width: 200,
   },
-  TouchableOpacity: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    marginTop: 10,
+  addButton: {
+    backgroundColor: '#FF6F61',
+    borderRadius: 10,
+    margin: 10,
   },
-  TouchableOpacityOpen: {
-    backgroundColor: '#F194FF',
-  },
-  TouchableOpacityClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
+  modalButton: {
+    marginVertical: 5,
+    width: '100%',
+    borderRadius: 10,
   },
 });
+
