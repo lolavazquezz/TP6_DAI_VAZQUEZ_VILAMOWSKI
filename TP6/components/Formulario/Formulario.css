@@ -1,0 +1,12 @@
+form {
+    margin-bottom: 16px; /* Espacio bajo el formulario */
+  }
+  
+  input[type="text"] {
+    margin-right: 8px; /* Espacio entre el input y el botón */
+  }
+  
+  button {
+    width: 100px; /* Ancho del botón */
+  }
+  
